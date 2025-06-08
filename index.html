@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Moonlight Rendezvous</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+    <script src="https://unpkg.com/scrollreveal"></script>
+</head>
+<body>
+    <div id="title-screen" class="title-screen">
+        <h1 class="game-title">Moonlight Rendezvous</h1>
+        <div class="menu-buttons">
+            <button id="start-game">開始遊戲</button>
+            <button id="load-game" disabled>繼續遊戲</button>
+        </div>
+    </div>
+    
+    <div id="game" style="display: none;">
+        <div id="audio-controls" class="audio-controls">
+            <audio id="bgm" loop preload="auto">
+                <source src="Eternal Shadows.mp3" type="audio/mp3">
+            </audio>
+            <button id="musicToggle" class="music-button" aria-label="音樂控制">♪</button>
+        </div>
+        <div id="affection">好感度：0</div>
+        <div id="story"></div>
+        <div id="choices"></div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        window.onload = function() {
+            choose('start');
+        }
+    </script>
+</body>
+</html>
