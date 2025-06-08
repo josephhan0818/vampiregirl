@@ -1,0 +1,338 @@
+body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #1a1a1a;
+  color: #fff;
+  font-family: "微軟正黑體", sans-serif;
+  line-height: 1.6;
+}
+
+#game {
+  max-width: 800px;
+  margin: auto;
+}
+
+#game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+button {
+  font-size: clamp(16px, 2.5vw, 20px);
+  padding: 15px 25px;
+  background: linear-gradient(145deg, #6a0572, #ab1584);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.3s;
+  margin: 5px 0;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(145deg, #7b0683, #c41795);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+#debug {
+  text-align: center;
+  margin-bottom: 1em;
+  font-size: 18px;
+  color: #f8d7f8;
+}
+
+/* SugarCube specific styles */
+#story {
+  width: 100%;
+  max-width: 800px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px auto;
+}
+
+.passage {
+  margin: 0 auto;
+  padding: 1em;
+}
+
+.links {
+  margin-top: 2em;
+}
+
+tw-passage {
+  display: block;
+}
+
+tw-sidebar {
+  display: none;
+}
+
+#affection {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(106, 5, 114, 0.9);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 16px;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+#affection.highlight {
+  transform: scale(1.1);
+  background: rgba(171, 21, 132, 0.9);
+}
+
+#choices {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.story-image {
+  width: 100%;
+  height: 300px;
+  margin: 20px 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  border-radius: 10px;
+}
+
+.restart-button {
+  background: linear-gradient(145deg, #333, #444) !important;
+  margin-top: 30px;
+  color: #ff5ebc;
+  border: 2px solid #ff5ebc;
+  padding: 15px 30px;
+  font-size: 18px;
+  margin-top: 20px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.restart-button:hover {
+  background-color: #ff5ebc;
+  color: #2d0f2d;
+}
+
+.audio-controls {
+  position: fixed;
+  top: 20px;
+  left: 20px;  /* 改為左側 */
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.music-button {
+  background-color: rgba(106, 5, 114, 0.8);
+  border: 2px solid #ff5ebc;
+  color: #fff;  /* 改為白色 */
+  width: 44px;
+  height: 44px;  /* 增加點擊區域 */
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;  /* 移除移動設備上的點擊高亮 */
+}
+
+.music-button:hover {
+  background-color: rgba(171, 21, 132, 0.8);
+  transform: scale(1.05);
+}
+
+.music-button:active {
+  transform: scale(0.95);
+}
+
+.character-image {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease;
+  margin: 20px auto;
+  display: block;
+  object-fit: contain;
+}
+
+.character-image:hover {
+  transform: scale(1.02);
+}
+
+/* 愛心動畫樣式 */
+.heart {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    background-image: url('pic/heart.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    user-select: none;
+    pointer-events: none;
+    z-index: 9999;
+    animation: floatHeart 1.5s ease-out forwards;
+    filter: drop-shadow(0 0 3px rgba(255, 94, 188, 0.5));
+}
+
+@keyframes floatHeart {
+    0% {
+        opacity: 1;
+        transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: translateY(-50px) translateX(calc(20px - (Math.random() * 40px))) rotate(15deg) scale(0.8);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) translateX(calc(40px - (Math.random() * 80px))) rotate(30deg) scale(0.3);
+    }
+}
+
+/* 破碎心形動畫樣式 */
+.broken-heart {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    background-image: url('pic/broken-heart.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    user-select: none;
+    pointer-events: none;
+    z-index: 9999;
+    animation: sinkHeart 1.5s ease-in forwards;
+}
+
+@keyframes sinkHeart {
+    0% {
+        opacity: 1;
+        transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(100px) translateX(calc(20px - (Math.random() * 40px))) rotate(-30deg) scale(0.3);
+    }
+}
+
+/* 手機適配 */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  #story {
+    font-size: 16px;
+    padding: 15px;
+  }
+
+  button {
+    padding: 12px 20px;
+    font-size: 16px;
+  }
+
+  #affection {
+    top: 10px;
+    right: 10px;
+    font-size: 14px;
+  }
+
+  .audio-controls {
+    top: 10px;
+    left: 10px;
+  }
+
+  .music-button {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .game-title {
+    font-size: 2.5em;
+  }
+  
+  .menu-buttons button {
+    min-width: 150px;
+  }
+}
+
+/* 載入動畫 */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 首頁樣式 */
+.title-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #1a1a1a 0%, #3a0339 100%);
+    z-index: 9999;
+}
+
+.game-title {
+    font-size: 4em;
+    color: #ff5ebc;
+    text-shadow: 0 0 10px rgba(255, 94, 188, 0.5);
+    margin-bottom: 2em;
+    animation: titlePulse 2s ease-in-out infinite;
+}
+
+@keyframes titlePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.menu-buttons button {
+    min-width: 200px;
+    font-size: 1.2em;
+}
+
+.menu-buttons button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
