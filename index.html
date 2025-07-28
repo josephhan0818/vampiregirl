@@ -1,37 +1,928 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>Moonlight Rendezvous</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
-    <script src="https://unpkg.com/scrollreveal"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>莉莉絲的祕密</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #121013;
+            --text-color: #e0e0e0;
+            --accent-color: #8a0303;
+            --choice-bg: #2a262d;
+            --choice-hover-bg: #433c4a;
+            --border-color: #555;
+            --disabled-text-color: #666;
+            --disabled-bg-color: #222;
+            --disabled-border-color: #333;
+            --quote-color: #aaa;
+            --inspiration-bg: rgba(138, 3, 3, 0.1);
+            --inspiration-border: #8a0303;
+            --selected-bg: #8a0303;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Noto Serif TC', serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            background-image: linear-gradient(rgba(18, 16, 19, 0.65), rgba(18, 16, 19, 0.6)), url('assets/background.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 800px;
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 50px 40px 40px 40px;
+            background-color: rgba(18, 16, 19, 0.85);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+            animation: fadeIn 1s ease-in-out;
+            position: relative;
+        }
+        
+        #ui-top-bar {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            z-index: 10;
+        }
+
+        #notebook-button {
+            background-color: var(--choice-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 15px;
+            font-family: 'Noto Serif TC', serif;
+            font-size: 0.9em;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        #notebook-button:hover {
+            background-color: var(--choice-hover-bg);
+        }
+
+        #story-text {
+            font-size: 1.15em;
+            line-height: 1.9;
+            margin-bottom: 25px;
+            min-height: 150px;
+            white-space: pre-wrap;
+            opacity: 0;
+            animation: textFadeIn 1.5s forwards;
+        }
+        
+        #story-text em {
+            color: var(--quote-color);
+            font-style: italic;
+        }
+        
+        #inspiration-container {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px dashed var(--inspiration-border);
+            border-radius: 8px;
+            background-color: var(--inspiration-bg);
+            min-height: 50px;
+            display: none; /* Initially hidden */
+        }
+
+        #inspiration-container h4 {
+            margin: 0 0 10px 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .inspiration-tag {
+            display: inline-block;
+            background-color: var(--choice-bg);
+            padding: 5px 12px;
+            border-radius: 15px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        #choices {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .choice-button, .inspiration-button {
+            background-color: var(--choice-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 15px 20px;
+            font-family: 'Noto Serif TC', serif;
+            font-size: 1em;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            opacity: 0;
+            animation: choiceFadeIn 0.5s forwards;
+        }
+
+        .choice-button:hover:not(:disabled), .inspiration-button:hover:not(:disabled) {
+            background-color: var(--choice-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border-color: var(--accent-color);
+        }
+        
+        .choice-button:disabled, .inspiration-button:disabled {
+            background-color: var(--disabled-bg-color);
+            color: var(--disabled-text-color);
+            cursor: not-allowed;
+            transform: none;
+            border-color: var(--disabled-border-color);
+            box-shadow: none;
+        }
+        
+        .inspiration-button.selected {
+            background-color: var(--selected-bg);
+            color: white;
+            border-color: white;
+            box-shadow: 0 0 10px var(--selected-bg);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background-color: var(--bg-color);
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+        }
+
+        .close-button {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            color: var(--text-color);
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #notebook-entries .entry {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+        
+        #notebook-entries .category-title {
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        #notebook-entries .entry:last-child {
+            border-bottom: none;
+        }
+
+        #notebook-entries h3 {
+            color: var(--text-color); /* Changed for better contrast under category */
+            margin-top: 0;
+            font-size: 1.1em;
+        }
+
+        #notebook-entries p {
+            color: var(--quote-color); /* Changed for better contrast */
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes textFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes choiceFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .illustration-placeholder {
+            width: 100%;
+            height: auto;
+            background: none;
+            border: none;
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: inherit;
+            font-style: inherit;
+            border-radius: 0;
+        }
+        .story-illustration {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 18px;
+            box-shadow: 0 6px 32px rgba(0,0,0,0.45);
+            display: block;
+            margin: 0 auto;
+        }
+        .illustration-placeholder::after {
+            content: '';
+        }
+    </style>
 </head>
 <body>
-    <div id="title-screen" class="title-screen">
-        <h1 class="game-title">Moonlight Rendezvous</h1>
-        <div class="menu-buttons">
-            <button id="start-game">開始遊戲</button>
-            <button id="load-game" disabled>繼續遊戲</button>
-        </div>
+
+<div id="game-container">
+    <div id="ui-top-bar">
+        <button id="notebook-button">筆記本</button>
     </div>
-    
-    <div id="game" style="display: none;">
-        <div id="audio-controls" class="audio-controls">
-            <audio id="bgm" loop preload="auto">
-                <source src="Eternal Shadows.mp3" type="audio/mp3">
-            </audio>
-            <button id="musicToggle" class="music-button" aria-label="音樂控制">♪</button>
-        </div>
-        <div id="affection">好感度：0</div>
-        <div id="story"></div>
-        <div id="choices"></div>
+    <div id="story-text"></div>
+    <div id="inspiration-container"></div>
+    <div id="choices"></div>
+</div>
+
+<div id="notebook-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>筆記本</h2>
+        <div id="notebook-entries"></div>
     </div>
-    <script src="script.js"></script>
-    <script>
-        window.onload = function() {
-            choose('start');
+</div>
+
+<script>
+// --- Inspiration Pool ---
+const inspirationPool = {
+    bedroom: ['睡美人', '森林', '夢境'],
+    bathroom: ['恐怖', '雕像', '倒影'],
+    hall: ['孤獨', '宴會', '王權'],
+    corridor: ['無限', '監視', '畫像'],
+    gate: ['犧牲', '忠誠', '異鄉人']
+};
+
+// --- NEW: Clue Database ---
+const clueDatabase = {
+    'clue_sacrifice_loyalty': { title: "玄關的雕像", content: "玄關處快樂王子的雕像讓你聯想到，至高的**犧牲**往往源於最深的**忠誠**。" },
+    'clue_sleep_sacrifice': { title: "臥室的童話書", content: "一本褪色的童話書中夾著一張書籤，上面寫著：『公主的**沉睡**，何嘗不是一種**犧牲**？』" },
+    'clue_lonely_sacrifice': { title: "大廳的空椅子", content: "看著大廳裡那張孤單的王座，你心想，至高的權力背後，或許是**犧牲**一切的**孤獨**。" },
+    'clue_terror_sleep_sacrifice': { title: "浴室的鏡子", content: "浴室的鏡子上有一層霧氣，你擦開後，看到一行模糊的字：『最深的**恐怖**，是在**沉睡**中**犧牲**一切，卻無人知曉。』" }
+};
+const cluePool = {
+    gate: 'clue_sacrifice_loyalty',
+    bedroom: 'clue_sleep_sacrifice',
+    hall: 'clue_lonely_sacrifice',
+    bathroom: 'clue_terror_sleep_sacrifice'
+};
+
+
+// --- Expanded Story Database ---
+const storyDatabase = {
+    'default': { story: "你絞盡腦汁，但拼湊出的故事卻雜亂無章。關於一個迷路的騎士和一座會說話的雕像……但其中的情感卻很模糊。", moodEffect: -1, reactionKey: 'confused' },
+    // 1 fragment
+    '恐怖': { story: "你講述了一個關於暗影中潛伏之物的故事，它沒有形體，只以恐懼為食。每當有人感到害怕，它的力量就增長一分。", moodEffect: -1, reactionKey: 'annoyed' },
+    '孤獨': { story: "你描述了一位燈塔看守人的故事，他一生與海為伴，見過無數船隻，卻從未有人為他停留。他的世界只有海鷗與濤聲。", moodEffect: 1, reactionKey: 'pensive' },
+    '無限': { story: "你提到了一本書，書中講述著一個正在讀書的人的故事，而那個人讀的書，也講述著同一個故事，無限循環，永無止境。", moodEffect: 0, reactionKey: 'confused' },
+    '睡美人': { story: "你重新詮釋了睡美人的故事，公主並非因詛咒而沉睡，而是因無法承受的悲傷，自願陷入了永恆的夢境。", moodEffect: 1, reactionKey: 'pensive' },
+    '犧牲': { story: "你講了一個關於火焰的故事，它燃燒自己，為他人帶來光明與溫暖，最終卻只留下一捧無法被人記住的灰燼。", moodEffect: 2, reactionKey: 'sad_empathy' },
+    '忠誠': { story: "你講述了一隻老獵犬的故事，牠的主人早已逝去，但牠依然每日守在墓前，風雨無阻，直到自己也化為塵土。", moodEffect: 2, reactionKey: 'sad_empathy' },
+    '夢境': { story: "你描述了一個夢境，在夢裡，人可以飛翔，可以擁抱逝去之人。但夢醒時分的失落，遠比夢中的歡愉更加傷人。", moodEffect: 1, reactionKey: 'pensive' },
+    '王權': { story: "你講述了一位年輕的國王，他繼承了王權，也繼承了無盡的責任與孤獨。他的王冠不是榮耀，而是一座華麗的囚籠。", moodEffect: 1, reactionKey: 'neutral_understanding' },
+    // 2 fragments
+    '孤獨,恐怖': { story: "在一個被世人遺忘的角落，一個孤獨的靈魂夜夜吟唱，不是為了吸引聽眾，而是為了嚇跑那些試圖靠近的生物，以此保護自己脆弱的孤獨。", moodEffect: 0, reactionKey: 'neutral_understanding' },
+    '恐怖,無限': { story: "一個男人被困在鏡子迷宮中，每一面鏡子都映照出一個更加扭曲恐怖的自己。他不斷逃跑，卻只是從一個無限的恐怖，墜入另一個。", moodEffect: -1, reactionKey: 'annoyed' },
+    '孤獨,睡美人': { story: "睡美人醒來後，發現城堡空無一人，王子從未存在。她獨自一人在巨大的城堡中生活，直到老去，成為一個比睡眠更深沉的、關於孤獨的傳說。", moodEffect: 1, reactionKey: 'pensive' },
+    '孤獨,犧牲': { story: "一位雕塑家犧牲了自己所有的情感，將其注入作品中。他的雕像栩栩如生，備受讚譽，而他本人卻在無盡的孤獨中，變成了一尊沒有靈魂的石像。", moodEffect: 2, reactionKey: 'sad_empathy' },
+    '睡美人,犧牲': { story: "為了打破詛咒，公主犧牲了自己對王子的所有記憶。當王子終於到來時，他吻醒的，只是一個對他毫無感覺的、美麗的空殼。", moodEffect: 2, reactionKey: 'sad_empathy' },
+    '忠誠,犧牲': { story: "一位騎士立誓永遠忠誠於他的國家。當國家要求他犧牲自己的愛人以換取勝利時，他照做了。他贏得了戰爭，卻永遠失去了自己。", moodEffect: 2, reactionKey: 'sad_empathy' },
+    '夢境,無限': { story: "一個人發現他無法從夢中醒來。每一個他以為的「清醒」，都只是另一層夢境的開始。他的現實，成了一座無限層的夢之監獄。", moodEffect: -1, reactionKey: 'annoyed' },
+    '王權,犧牲': { story: "為了平息人民的憤怒，老國王犧牲了自己的王權，自願走上斷頭台。人們為推翻暴政而歡呼，卻沒人記得，正是這位國王終結了數十年的戰爭。", moodEffect: 2, reactionKey: 'sad_empathy' },
+    // 3 fragments
+    '恐怖,睡美人,犧牲': { story: "在荊棘森林深處，沉睡的公主等待著一個永遠不會到來的吻。一個恐懼的騎士犧牲了自己，試圖闖入，最終卻只成為了森林的一部分，他的鎧甲與荊棘融為一體，永遠守護著那份無望的沉寂。", moodEffect: 3, reactionKey: 'high_empathy' },
+    '孤獨,恐怖,無限': { story: "一個孤獨的旅人走進一條無盡的長廊，他以為只要一直走就能找到出口。但他沒意識到，每走一步，他都在變得更透明，逐漸成為長廊本身的一部分，成為下一個旅人眼中轉瞬即逝的恐怖幻影。", moodEffect: -1, reactionKey: 'annoyed' },
+    '孤獨,睡美人,犧牲': { story: "睡美人知道王子永遠不會來。於是她犧牲了自己唯一的夢境，將其編織成一個保護罩，永遠隔絕了外界。她選擇了永恆的孤獨，以此來保護自己不再擁有任何希望。", moodEffect: 2, reactionKey: 'sad_empathy' },
+    '忠誠,孤獨,犧牲': { story: "最後的守護者，為了忠誠於一份早已被遺忘的誓言，犧牲了自己離開的機會，選擇永遠孤獨地守在一座空無一人的王城裡。", moodEffect: 3, reactionKey: 'high_empathy' }
+};
+
+const reactionDatabase = {
+    'confused': "她面無表情地聽著，似乎不明白你想表達什麼。「……知道了。」",
+    'sad_empathy': "她靜靜地聽完，眼神中流露出一絲難以察覺的憂傷。「犧牲希望……來換取安寧嗎？真是個……悲傷的選擇。」<br><br>她似乎對你敞開了一點心扉。",
+    'annoyed': "她皺了皺眉頭。「無聊的恐怖故事，只是為了嚇人罷了。」<br><br>你感覺到氣氛變得冰冷。",
+    'neutral_understanding': "她聽完後，只是淡淡地說：「知道了。」<br><br>看不出她的情緒，但至少你活過了今晚。",
+    'pensive': "她若有所思地望著壁爐的火焰。「永遠的守護……有時候比死亡更像詛咒。」",
+    'high_empathy': "她久久沒有說話，只是凝視著你，紅色的眼眸中似乎有水光閃動。「……謝謝你。謝謝你……講了這個故事。」"
+};
+
+
+// DOM Elements
+const storyTextElement = document.getElementById('story-text');
+const choicesElement = document.getElementById('choices');
+const inspirationContainer = document.getElementById('inspiration-container');
+const notebookButton = document.getElementById('notebook-button');
+const notebookModal = document.getElementById('notebook-modal');
+const notebookEntriesContainer = document.getElementById('notebook-entries');
+const closeButton = document.querySelector('.close-button');
+
+// Game State
+let gameState = {};
+
+// Function to initialize or reset the game state
+function resetGameState() {
+    gameState = {
+        goodwill: 0,
+        daysPassed: 0,
+        dungeonClues: { angels: false, bread: false, dust: false, bones: false, bones_detail: false },
+        castleClues: { bedroom: false, bathroom: false, hall: false, corridor: false, gate: false },
+        storyInspirations: [],
+        selectedInspirations: [], 
+        notebookEntries: [], 
+        foundClues: [], 
+        knowsLilithName: false,
+        currentStory: '',
+        currentReactionKey: '',
+        lastInspirationResult: '',
+        lastClueResult: '',
+        memory_1_shown: false,
+        memory_2_shown: false,
+        memory_3_shown: false,
+        achievedEnding: null, 
+    };
+}
+
+// --- Notebook Functions ---
+function addNotebookEntry(id, category, title, content) {
+    if (!gameState.notebookEntries.some(entry => entry.id === id)) {
+        gameState.notebookEntries.push({ id, category, title, content });
+    }
+}
+
+function renderNotebook() {
+    notebookEntriesContainer.innerHTML = '';
+    if (gameState.notebookEntries.length === 0) {
+        notebookEntriesContainer.innerHTML = '<p><em>目前沒有任何紀錄。</em></p>';
+        return;
+    }
+    const categories = {
+        '地牢的發現': [],
+        '關鍵事件': [],
+        '莉莉絲的回憶': [],
+        '故事的線索': []
+    };
+    gameState.notebookEntries.forEach(entry => {
+        if (categories[entry.category]) {
+            categories[entry.category].push(entry);
         }
-    </script>
+    });
+
+    for (const categoryName in categories) {
+        if (categories[categoryName].length > 0) {
+            const categoryHeader = document.createElement('h2');
+            categoryHeader.textContent = categoryName;
+            categoryHeader.classList.add('category-title');
+            notebookEntriesContainer.appendChild(categoryHeader);
+
+            categories[categoryName].forEach(entry => {
+                const entryDiv = document.createElement('div');
+                entryDiv.classList.add('entry');
+                const titleH3 = document.createElement('h3');
+                titleH3.textContent = entry.title;
+                const contentP = document.createElement('p');
+                contentP.innerHTML = entry.content;
+                entryDiv.appendChild(titleH3);
+                entryDiv.appendChild(contentP);
+                notebookEntriesContainer.appendChild(entryDiv);
+            });
+        }
+    }
+}
+
+function openNotebook() {
+    renderNotebook();
+    notebookModal.style.display = 'flex';
+}
+
+function closeNotebook() {
+    notebookModal.style.display = 'none';
+}
+
+// --- Event Listeners for Notebook ---
+notebookButton.addEventListener('click', openNotebook);
+closeButton.addEventListener('click', closeNotebook);
+notebookModal.addEventListener('click', (event) => {
+    if (event.target === notebookModal) {
+        closeNotebook();
+    }
+});
+
+
+// Function to update the inspiration display
+function updateInspirationDisplay() {
+    if (gameState.storyInspirations.length > 0) {
+        inspirationContainer.style.display = 'block';
+        inspirationContainer.innerHTML = `<h4>靈感背包：</h4>`;
+        gameState.storyInspirations.forEach(tag => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'inspiration-tag';
+            tagElement.textContent = tag;
+            inspirationContainer.appendChild(tagElement);
+        });
+    } else {
+        inspirationContainer.style.display = 'none';
+        inspirationContainer.innerHTML = '';
+    }
+}
+
+// Function to display a scene
+function showScene(sceneId) {
+    const scene = story[sceneId];
+    if (!scene) {
+        console.error(`場景 "${sceneId}" 未找到！`);
+        return;
+    }
+
+    if (scene.isRouter) {
+        const nextChoice = scene.choices.find(choice => !choice.condition || choice.condition(gameState));
+        if (nextChoice) {
+            if (nextChoice.action) nextChoice.action(gameState);
+            const nextSceneId = typeof nextChoice.nextScene === 'function' ? nextChoice.nextScene(gameState) : nextChoice.nextScene;
+            setTimeout(() => showScene(nextSceneId), 0);
+            return;
+        }
+    }
+
+    storyTextElement.style.animation = 'none';
+    storyTextElement.offsetHeight; 
+    storyTextElement.style.animation = 'textFadeIn 1.5s forwards';
+    
+    storyTextElement.innerHTML = scene.text(gameState);
+    
+    if (sceneId !== 'storytelling_session') {
+        updateInspirationDisplay();
+    } else {
+        inspirationContainer.style.display = 'none';
+    }
+    
+    while (choicesElement.firstChild) {
+        choicesElement.removeChild(choicesElement.firstChild);
+    }
+    
+    if (sceneId === 'storytelling_session') {
+        renderStorytellingChoices();
+    } else {
+        const availableChoices = scene.choices.filter(choice => !choice.condition || choice.condition(gameState));
+        availableChoices.forEach((choice, index) => {
+            const button = document.createElement('button');
+            button.classList.add('choice-button');
+            button.innerHTML = choice.text(gameState);
+            button.style.animationDelay = `${0.2 + index * 0.1}s`;
+            if (choice.disabled && choice.disabled(gameState)) button.disabled = true;
+            button.addEventListener('click', () => selectChoice(choice));
+            choicesElement.appendChild(button);
+        });
+    }
+}
+
+// --- Backpack and Story Combination Logic ---
+function renderStorytellingChoices() {
+    gameState.storyInspirations.forEach(inspiration => {
+        const button = document.createElement('button');
+        button.classList.add('inspiration-button');
+        button.textContent = inspiration;
+        if (gameState.selectedInspirations.includes(inspiration)) {
+            button.classList.add('selected');
+        }
+        button.addEventListener('click', () => {
+            toggleInspirationSelection(inspiration);
+            showScene('storytelling_session'); 
+        });
+        choicesElement.appendChild(button);
+    });
+
+    const combineButton = document.createElement('button');
+    combineButton.classList.add('choice-button');
+    combineButton.textContent = '組合靈感並講述故事';
+    combineButton.disabled = gameState.selectedInspirations.length === 0;
+    combineButton.addEventListener('click', () => {
+        tellPredefinedStory(gameState);
+        selectChoice({ nextScene: 'display_story' });
+    });
+    choicesElement.appendChild(combineButton);
+    
+    const fallbackButton = document.createElement('button');
+    fallbackButton.classList.add('choice-button');
+    fallbackButton.textContent = '（還是敷衍了事吧）';
+    fallbackButton.addEventListener('click', () => {
+        gameState.selectedInspirations = []; 
+        tellPredefinedStory(gameState);
+        selectChoice({ nextScene: 'display_story' });
+    });
+    choicesElement.appendChild(fallbackButton);
+}
+
+function toggleInspirationSelection(inspiration) {
+    const index = gameState.selectedInspirations.indexOf(inspiration);
+    if (index > -1) {
+        gameState.selectedInspirations.splice(index, 1);
+    } else {
+        if (gameState.selectedInspirations.length < 3) {
+            gameState.selectedInspirations.push(inspiration);
+        }
+    }
+}
+
+// Function to handle choice selection
+function selectChoice(choice) {
+    if (choice.action) {
+        choice.action(gameState);
+    }
+    
+    storyTextElement.style.opacity = '0';
+    choicesElement.style.opacity = '0';
+    inspirationContainer.style.opacity = '0';
+
+    const nextScene = typeof choice.nextScene === 'function' ? choice.nextScene(gameState) : choice.nextScene;
+    
+    setTimeout(() => {
+        storyTextElement.style.opacity = '1';
+        choicesElement.style.opacity = '1';
+        inspirationContainer.style.opacity = '1';
+        showScene(nextScene);
+    }, 400);
+}
+
+// --- UPDATED: Exploration now handles both inspirations and clues ---
+function handleExploration(gs, sceneKey) {
+    gs.castleClues[sceneKey] = true;
+    gs.lastInspirationResult = ''; // Reset results
+    gs.lastClueResult = '';       // Reset results
+
+    // Inspiration Logic
+    if (Math.random() < 0.75) {
+        const pool = inspirationPool[sceneKey];
+        const newInspiration = pool.find(i => !gs.storyInspirations.includes(i));
+        if (newInspiration) {
+            gs.storyInspirations.push(newInspiration);
+            gs.lastInspirationResult = `<em>你獲得了靈感：#${newInspiration}</em>`;
+        } else {
+            gs.lastInspirationResult = '<em>你仔細地察看，但這個地方似乎沒有更多新的啟示了。</em>';
+        }
+    } else {
+        gs.lastInspirationResult = '<em>你仔細地察看，但沒有任何新的發現。</em>';
+    }
+
+    // Clue Logic
+    const sceneClueId = cluePool[sceneKey];
+    if (sceneClueId && !gs.foundClues.includes(sceneClueId) && Math.random() < 0.4) { // 40% chance
+        const clueData = clueDatabase[sceneClueId];
+        gs.foundClues.push(sceneClueId);
+        addNotebookEntry(sceneClueId, '故事的線索', clueData.title, clueData.content);
+        gs.lastClueResult = `<em>你在房間的角落發現了一些筆記，似乎是關於故事組合的線索。（已加入筆記本）</em>`;
+    }
+}
+
+// --- Storytelling Logic ---
+function tellPredefinedStory(gs) {
+    const key = [...gs.selectedInspirations].sort((a, b) => a.localeCompare(b, 'zh-Hant')).join(',');
+    const storyData = storyDatabase[key] || storyDatabase.default;
+
+    gs.currentStory = storyData.story;
+    gs.goodwill += storyData.moodEffect;
+    gs.currentReactionKey = storyData.reactionKey;
+}
+
+// The entire story structure
+const story = {
+    start: {
+        text: () => `黑色畫面中浮現一行白字。<br><br><em>「所有的祕密都很深，所有的祕密最終都會變成黑暗，這是祕密的本質。」<br>— Cory Doctorow,《Little Brother》</em>`,
+        choices: [
+            { text: () => '（點擊以開始）', nextScene: 'awaken' }
+        ]
+    },
+    awaken: {
+        text: () => `黑暗。這是在意識清醒前，你唯一能感知的東西。接著，是寒冷，一種刺骨的濕冷，從身下的石板滲透進你的每一寸肌膚。空氣中瀰漫著一股複雜的氣味——是塵封已久的霉味，混合著鐵鏽和某種……更古老、更具金屬感的腥氣。遠處傳來規律的滴水聲，嗒…嗒…嗒…在死寂的空間中迴蕩，彷彿在為你的孤獨倒數計時。`,
+        choices: [
+            { text: () => '（你費力地睜開眼睛）', nextScene: 'awaken_observe' }
+        ]
+    },
+    awaken_observe: {
+        text: () => `你在一片冰冷潮濕的石地上恢復意識。手腕上傳來金屬的冰冷觸感，你被鎖住了。這似乎是一座地牢。<br><br><em>（內心獨白）<br>我在哪裡？……頭好痛，什麼都想不起來。我的名字……我的過去……一片空白。</em>`,
+        choices: [
+            { text: () => '（一個身影出現在地牢門口）', nextScene: 'first_encounter' }
+        ]
+    },
+    first_encounter: {
+        text: () => `地牢遠處的鐵門發出沉重的「嘎吱」聲，一道光線劃破黑暗。一個高大的人影逆光而立，輪廓被厚重的衣物包裹，最引人注目的是其頭部——一個中世紀瘟疫醫生所戴的，有著長長鳥喙的鐵面具。她/他一步步走近，每一步都伴隨著輕微的金屬碰撞聲。<br><br>「你在我的領地門口被發現。一個不幸的發現。凡是見過此地的人，都不被允許離開。」<br><br>她/他拉過一把看似與此地格格不入的白色搖椅，坐了下來。<br><br>「你的生命已經註定要終結。唯一懸而未決的問題是，你將如何度過你最後的時日。從今晚開始，我會來審問你。」`,
+        choices: [
+            { text: () => '（在恐懼中等待黑夜過去）', nextScene: 'dungeon_hub', action: (gs) => { gs.daysPassed++; } }
+        ]
+    },
+    dungeon_hub: {
+        text: (gs) => {
+            let intro = gs.daysPassed === 1 ? `白天降臨，你被獨自留在地牢中。那個神秘人物離開了。為了打發時間，也為了尋找一線生機，你決定觀察四周。` : `又一個白天。你依然被困在地牢裡。`;
+            let conclusion = (gs.dungeonClues.angels && gs.dungeonClues.bread && gs.dungeonClues.dust && gs.dungeonClues.bones_detail) ? `<br><br><em>你已經把地牢的每個角落都觀察遍了。你推斷此人是古堡的後裔，獨自生活，且有著殺害男性並吸食血液的嫌疑，但其手法似乎有所轉變。</em>` : ``;
+            return `${intro}${conclusion}<br><br>你該做些什麼？`;
+        },
+        choices: [
+            { text: () => '觀察天花板的雕飾', nextScene: 'dungeon_observe_angels', condition: (gs) => !gs.dungeonClues.angels },
+            { text: () => '感受環境的濕冷與塵埃', nextScene: 'dungeon_observe_dust', condition: (gs) => !gs.dungeonClues.dust },
+            { text: () => '查看送來的食物', nextScene: 'dungeon_observe_bread', condition: (gs) => !gs.dungeonClues.bread },
+            { text: () => '檢查角落的乾屍堆', nextScene: 'dungeon_observe_bones', condition: (gs) => !gs.dungeonClues.bones },
+            { text: () => '更仔細地檢查骸骨', nextScene: 'dungeon_observe_bones_detail', condition: (gs) => gs.dungeonClues.bones && !gs.dungeonClues.bones_detail },
+            { text: () => '（等待夜晚的審問）', nextScene: 'first_interrogation' }
+        ]
+    },
+    castle_hub_day: {
+        text: (gs) => {
+            if (gs.newDay) {
+                gs.castleClues = { bedroom: false, bathroom: false, hall: false, corridor: false, gate: false };
+                gs.newDay = false;
+            }
+            return `新的一天開始了。少女似乎不在城堡裡。在晚上向她講故事之前，你可以在有限的區域內探索，尋找一些靈感。<br><br><em>目前的好感度：${gs.goodwill}</em>`;
+        },
+        choices: [
+            { text: () => '探索你的臥室', nextScene: 'explore_bedroom', disabled: (gs) => gs.castleClues.bedroom, action: (gs) => handleExploration(gs, 'bedroom') },
+            { text: () => '探索客用浴室', nextScene: 'explore_bathroom', disabled: (gs) => gs.castleClues.bathroom, action: (gs) => handleExploration(gs, 'bathroom') },
+            { text: () => '探索大廳', nextScene: 'explore_hall', disabled: (gs) => gs.castleClues.hall, action: (gs) => handleExploration(gs, 'hall') },
+            { text: () => '探索房間長廊', nextScene: 'explore_corridor', disabled: (gs) => gs.castleClues.corridor, action: (gs) => handleExploration(gs, 'corridor') },
+            { text: () => '探索玄關大門', nextScene: 'explore_gate', disabled: (gs) => gs.castleClues.gate, action: (gs) => handleExploration(gs, 'gate') },
+            { text: () => '（等待夜晚來講故事）', nextScene: 'storytelling_session' },
+            { text: () => '（我覺得時機成熟了，是時候和她談談未來了。）', nextScene: 'final_choice_router', condition: (gs) => gs.goodwill >= 10 && gs.memory_3_shown }
+        ]
+    },
+    explore_bedroom: {
+        text: (gs) => `你的臥室相當舒適，但窗外是一片蓊鬱的森林，濃密的樹木遮蔽了視線，讓你難以辨別方位。<br><br>${gs.lastInspirationResult}<br>${gs.lastClueResult}`,
+        choices: [{ text: () => '回到探索選單', nextScene: 'castle_hub_day' }]
+    },
+    explore_bathroom: {
+        text: (gs) => `客用浴室有著華麗的雕塑與木製的澡盆，但已積滿灰塵與蟲害痕跡。一個尿尿小童的雕像立在角落，看起來格外詭異。<br><br>${gs.lastInspirationResult}<br>${gs.lastClueResult}`,
+        choices: [{ text: () => '回到探索選單', nextScene: 'castle_hub_day' }]
+    },
+    explore_hall: {
+        text: (gs) => `大廳極盡奢華，巨大的長桌與精雕的木椅彷彿在等待一場永遠不會開始的宴會。<br><br>${gs.lastInspirationResult}<br>${gs.lastClueResult}`,
+        choices: [{ text: () => '回到探索選單', nextScene: 'castle_hub_day' }]
+    },
+    explore_corridor: {
+        text: (gs) => `房間長廊看似無盡延伸，兩側掛著褪色的畫像，他們的眼睛好像在注視著你，既華麗又令人恐懼。<br><br>${gs.lastInspirationResult}<br>${gs.lastClueResult}`,
+        choices: [{ text: () => '回到探索選單', nextScene: 'castle_hub_day' }]
+    },
+    explore_gate: {
+        text: (gs) => `玄關大門旁擺放著一座雕像，看似是前屋主。角落還有些來自東洋的文物，似乎暗示著屋主曾與東方有過交集。<br><br>${gs.lastInspirationResult}<br>${gs.lastClueResult}`,
+        choices: [{ text: () => '回到探索選單', nextScene: 'castle_hub_day' }]
+    },
+    storytelling_session: {
+        text: (gs) => `夜晚，莉莉絲在大廳等待著。你翻看著背包中的靈感碎片，思考著該如何組合它們。<br><br><em>請選擇 1-3 個靈感來創作故事。</em>`,
+        choices: [
+            // This scene is now rendered dynamically by renderStorytellingChoices()
+        ]
+    },
+    display_story: {
+        text: (gs) => `你清了清喉嚨，開始講述你的故事：<br><br><em>${gs.currentStory}</em>`,
+        choices: [
+            { text: () => '（觀察她的反應）', nextScene: 'story_reaction' }
+        ]
+    },
+    story_reaction: {
+        text: (gs) => {
+            const reactionText = reactionDatabase[gs.currentReactionKey] || reactionDatabase.confused;
+            const reactionImage = gs.currentReactionKey ? `<div class="illustration-placeholder"><img src="assets/${gs.currentReactionKey}.png" class="story-illustration" alt="${gs.currentReactionKey}"></div>` : '';
+            gs.selectedInspirations = [];
+            gs.currentStory = '';
+            gs.currentReactionKey = '';
+            gs.newDay = true;
+            return reactionImage + reactionText;
+        },
+        choices: [{ text: () => '（度過一夜）', nextScene: 'check_progress' }]
+    },
+    check_progress: {
+        isRouter: true,
+        text: () => ``, 
+        choices: [
+            { text: () => '', nextScene: 'bad_end_low_goodwill', condition: (gs) => gs.goodwill <= -1 },
+            { text: () => '', nextScene: 'memory_fragment_3', condition: (gs) => gs.goodwill >= 8 && !gs.memory_3_shown },
+            { text: () => '', nextScene: 'memory_fragment_2', condition: (gs) => gs.goodwill >= 6 && !gs.memory_2_shown },
+            { text: () => '', nextScene: 'memory_fragment_1', condition: (gs) => gs.goodwill >= 3 && !gs.memory_1_shown },
+            { text: () => '', nextScene: 'castle_hub_day', action: (gs) => { gs.daysPassed++; } }
+        ]
+    },
+    bad_end_low_goodwill: {
+        text: () => `在你講完故事後，莉莉絲的眼神變得冰冷刺骨。你看見的不再是憂鬱或悲傷，而是純粹的、毫不掩飾的厭惡。<br><br>「無趣……又一個無趣的靈魂。」<br><br>她甚至沒有給你反應的時間。一道銀光閃過，你的意識便被永恆的黑暗吞噬。<br><br>【結局：無趣的靈魂】<br>你沒能理解她內心的傷痕，反而一次次地觸怒她。當耐心耗盡時，你便成為了城堡中又一具冰冷的骸骨。`,
+        choices: [
+            { text: () => '重新開始', nextScene: 'start', action: resetGameState }
+        ]
+    },
+    memory_fragment_1: {
+        text: () => `那天晚上，在你講完故事後，莉莉絲沒有像往常一樣沉默。她望著壁爐中跳動的火焰，輕聲說：<br><br>「我小時候……也常常聽故事。父親和母親會輪流在床邊念書給我聽。他們說，我是世界上最美麗的公主……」<br><br>她的聲音很輕，彷彿在說一件與自己無關的、很久遠的事。這是她第一次主動提起她的家人。`,
+        choices: [
+            { text: () => '（靜靜地聽著）', nextScene: 'castle_hub_day', action: (gs) => { gs.memory_1_shown = true; gs.daysPassed++; addNotebookEntry('memory_family', '莉莉絲的回憶', '家人', '「我小時候……也常常聽故事。父親和母親會輪流在床邊念書給我聽。他們說，我是世界上最美麗的公主……」'); } }
+        ]
+    },
+    memory_fragment_2: {
+        text: () => `又一個夜晚，莉莉絲看起來心事重重。她突然問你：<br><br>「你覺得……朋友是什麼？」<br><br>不等你回答，她便自顧自地說下去：「我曾經有過一個朋友。他是唯一不害怕我的人。他很有趣，懂很多東西……我以為，他是不同的。」<br><br>說到最後，她的語氣中帶上了一絲難以察覺的冰冷。`,
+        choices: [
+            { text: () => '「後來呢？」', nextScene: 'castle_hub_day', action: (gs) => { gs.memory_2_shown = true; gs.daysPassed++; addNotebookEntry('memory_friend', '莉莉絲的回憶', '朋友', '「我曾經有過一個朋友。他是唯一不害怕我的人。他很有趣，懂很多東西……我以為，他是不同的。」'); } }
+        ]
+    },
+    memory_fragment_3: {
+        text: () => `莉莉絲帶你來到一間塵封已久的書房。房間中央，有一具完整的骸骨安詳地躺在椅子上。<br><br>「他就是我說的那個朋友。」她語氣平靜地可怕。「他花了五十年接近我，討好我，只是為了我的『永恆』，為了他那可悲的、對知識的貪婪。」<br><br>你看著她顫抖的背影，終於明白了她所有冷漠與尖刺的來源。`,
+        choices: [
+            { text: () => '（檢查房間）', nextScene: 'examine_doctor_room' }
+        ]
+    },
+    examine_doctor_room: {
+        text: () => `在骸骨旁的桌子上，你看到了一些遺物。一個熟悉的鳥嘴面具、一件厚重的黑色斗篷，還有一個散發著奇異香氣的藥草包。`,
+        choices: [
+            { text: () => '（這就是她一開始穿戴的東西……）', nextScene: 'castle_hub_day', action: (gs) => { gs.memory_3_shown = true; gs.daysPassed++; addNotebookEntry('memory_doctor', '莉莉絲的回憶', '背叛', '她口中的「朋友」是一位醫生，他為了追求永生而接近她。在被轉化失敗後死去。莉莉絲一開始穿戴的鳥嘴面具和斗篷，都是這位醫生的遺物。這場背叛是她痛苦的主要來源。'); } }
+        ]
+    },
+    dungeon_observe_angels: {
+        text: () => `你抬頭望向地牢的角落，藉著從門縫透進的微光，你看到了一些精緻的石頭天使雕飾。儘管年代久遠，圖樣已被歲月磨損得模糊不清，但其優雅的線條依然透露出此處曾有的高貴。這不像一般的監獄，更像是一座……貴族古堡的地下部分。`,
+        choices: [{ text: () => '繼續觀察地牢', nextScene: 'dungeon_hub' }]
+    },
+    dungeon_observe_dust: {
+        text: () => `天花板的石磚結構年久失修，布滿了裂痕，濕氣從中滲出。地板上積著厚厚的灰塵與蜘蛛網，顯然已經極久沒有人打理。`,
+        choices: [{ text: () => '繼續觀察地牢', nextScene: 'dungeon_hub' }]
+    },
+    dungeon_observe_bread: {
+        text: () => `每天早上，會有人從門下的小窗口推進一個餐盤。盤子很髒，但上面的麵包卻出乎意料地……不錯。雖然稱不上新鮮出爐，但質地鬆軟，具備一定的品質。這形成了一種詭異的矛盾：一個對囚犯的食物品質有所要求，卻對其所處的環境棄之不顧的神秘人物。`,
+        choices: [{ text: () => '繼續觀察地牢', nextScene: 'dungeon_hub' }]
+    },
+    dungeon_observe_bones: {
+        text: () => `你的牢房角落裡，堆放著一堆令人毛骨悚然的乾屍。空氣中那股陳舊的血腥味正是源自於此。你鼓起勇氣靠近觀察，發現這些骸骨的骨骼形狀大致上都是男性。`,
+        choices: [{ text: () => '繼續觀察地牢', nextScene: 'dungeon_hub' }]
+    },
+    dungeon_observe_bones_detail: {
+        text: () => `你仔細檢查其中一具保存尚算完好的骸骨。在頸骨的位置，你發現了兩個對稱的、細小的孔洞，像是被某种尖銳的東西刺穿。接著，你撥開屍體身上破爛的衣物，看到其胸口處有著大大小小、深淺不一的刀口。<br><br><em>（內心獨白）<br>齒痕……還有刀傷？這不像是同一次攻擊留下的。難道是……兇手改變了手法？先是像野獸一樣啃咬，後來又轉為使用刀刃。這不像是一個冷血殺手的作風，反而像是一種……掙扎。</em>`,
+        choices: [{ text: () => '繼續觀察地牢', nextScene: 'dungeon_hub' }]
+    },
+    first_interrogation: {
+        text: () => `夜幕降臨，地牢比白天更加寒冷。戴著鳥嘴面具的獄卒如約而至，坐在那張白色搖椅上，輕微地搖晃著。<br><br>「說吧。你是誰？為什麼會出現在這裡？」`,
+        choices: [
+            { text: () => '（誠實）「我……我想不起來了。我醒來就在這裡。」', nextScene: 'interrogation_result', action: (gs) => { gs.goodwill += 2; } },
+            { text: () => '（挑釁）「你又是誰？在質問別人之前，不該先報上名來嗎？」', nextScene: 'interrogation_result', action: (gs) => { gs.goodwill -= 2; } },
+            { text: () => '（恐懼）「我不知道！求求你，放我走，我什麼都沒看見！」', nextScene: 'interrogation_result', action: (gs) => { gs.goodwill -= 1; } },
+            { text: () => '（狡詐）「我是一名旅人，迷了路。如果你放了我，我可以給你豐厚的報酬。」', nextScene: 'interrogation_result', action: (gs) => { gs.goodwill += 0; } }
+        ]
+    },
+    interrogation_result: {
+        text: (gs) => {
+            if (gs.goodwill > 0) {
+                return `獄卒沉默了許久。<br><br>「你的回答……跟以往來的那些傢伙不太一樣。」<br><br>她緩緩抬起手，解開了腦後的扣環，慢慢地，將那頂鳥嘴面具摘下。`;
+            } else {
+                return `獄卒發出一聲冷哼。<br><br>「無趣的回答。和其他人沒什麼兩樣。」<br><br><div class="illustration-placeholder">
+                    <img src="assets/bad_ending1.png" class="story-illustration" alt="獄卒危險氣息"></div><br>她的身影散發出危險的氣息，你感覺到生命正在流逝。`;
+            }
+        },
+        choices: [
+            { text: () => '...', nextScene: (gs) => gs.goodwill > 0 ? 'the_reveal' : 'bad_end_killed_in_dungeon' }
+        ]
+    },
+    bad_end_killed_in_dungeon: {
+        text: () => `在無盡的黑暗中，你感覺到一陣刺骨的劇痛，隨後意識便永遠地沉淪了。<br><br>【結局：無名的骸骨】<br>你沒能引起她的興趣，成為了地牢中又一具無人知曉的乾屍。`,
+        choices: [
+            { text: () => '重新開始', nextScene: 'start', action: resetGameState }
+        ]
+    },
+    the_reveal: {
+        text: () => `面具之下，是一張你完全意想不到的臉龐。如水銀般流瀉的銀白長髮，襯托著吹彈可破、卻毫無血色的肌膚。最驚人的是她的雙眼，宛如兩顆剔透的紅水晶，在黑暗中閃爍著奇異的光芒。<br><br
+        <div class="illustration-placeholder"><img src="assets/lilith_showing_her_face.png" class="story-illustration" alt="莉莉絲露臉"></div><br>你意識到，眼前的少女絕非人類，然而其絕世的美貌早已攫住了你的靈魂。<br><br>「怎樣？太久沒看到女人了是吧？」她面無表情，語氣冰冷，但臉頰上卻浮現出一抹似有若無的緋紅。<br><br>你連忙搖頭，意識到自己失態了。<br><br>「出來吧，我帶你到別的地方。」她抽出鑰匙，走向牢門。但在開門前，她突然停下，左手指甲瞬間變得尖銳修長。「但是，如果你敢耍什麼小動作，你就完蛋了。我什麼都知道。」`,
+        choices: [
+            { text: () => '（跟隨她離開地牢）', nextScene: 'gilded_cage', action: (gs) => { addNotebookEntry('lilith_face', '關鍵事件', '怪物的面容', '面具之下，是一張絕美卻毫無血色的少女臉龐，雙眼宛如紅水晶。她絕非人類。'); } }
+        ]
+    },
+    gilded_cage: {
+        text: () => `你們走出地牢，來到一座宏偉的大廳。雖然多數物件都被厚厚的灰塵所掩蓋，但依然可以窺見這裡曾經的奢華。她帶你穿過長廊，走上旋轉樓梯，在其中一扇門前停下。<br><br>「以後，這就是你的休息室。每天早上九點，準時到一樓的大廳報到。你以後的工作，就是每天跟我分享一則有趣的故事，知道嗎？」<br><br>你看見她銳利的目光，只能點頭答應。<br><br>「如果故事不有趣，就殺了你。」她留下這句話，轉身消失在長廊的黑暗中。`,
+        choices: [
+            { text: () => '（走進房間，不安地度過一晚）', nextScene: 'castle_hub_day', action: (gs) => { gs.daysPassed++; gs.newDay = true; addNotebookEntry('story_rule', '關鍵事件', '說書人的工作', '我的新工作是每天為她講一個有趣的故事。如果故事不有趣，就會被殺掉。'); } }
+        ]
+    },
+    // --- UPDATED: Final Choice Router with tiered options ---
+    final_choice_router: {
+        text: (gs) => {
+            let intro = `經過長時間的相處，她對你的戒心降低了許多。一天晚上，她主動對你說：「我叫莉莉絲。」<br><br>`;
+            if (gs.goodwill >= 12) {
+                intro += `她脫下了所有防備，露出了內裡柔軟的自我。她的頭髮放了下來，臉上甚至帶著一絲期待。<br><br><div class="illustration-placeholder"><img src="assets/ChatGPT Image 2025年7月28日 下午10_27_54.png" class="story-illustration" alt="莉莉絲柔軟自我"></div><br>「你見過我最醜陋的樣子，也聽過我最愚蠢的故事。但你還在這裡。」她深吸一口氣，紅色的眼眸直視著你的靈魂。`;
+            } else {
+                intro += `她脫下了厚重的斗篷，露出裡面有些血漬的無袖中世紀衣服。她的眼神不再那麼冰冷，多了一絲複雜的情感。<br><br><div class="illustration-placeholder"><img src="assets/ChatGPT Image 2025年7月28日 下午10_32_15.png" class="story-illustration" alt="莉莉絲複雜情感"></div><br>「你聽過一些故事，也見過我的過去。你和其他人……似乎不太一樣。`;
+            }
+            intro += `「所以我坦白地問你……你真正想要的，是什麼？」`;
+            return intro;
+        },
+        choices: [
+            { text: () => '「我想幫助你，但我……也必須回到我自己的生活中去。」', nextScene: 'ending_B', action: (gs) => { gs.achievedEnding = 'B'; }, condition: (gs) => gs.goodwill >= 8 },
+            { text: () => '「我想要留在妳身邊，永遠服侍妳，保護妳。」', nextScene: 'ending_C', action: (gs) => { gs.achievedEnding = 'C'; }, condition: (gs) => gs.goodwill >= 10 },
+            { text: () => '「我愛妳，莉莉絲。我想成為妳的伴侶，與妳一起，面對一切。」', nextScene: 'ending_D', action: (gs) => { gs.achievedEnding = 'D'; }, condition: (gs) => gs.goodwill >= 12 }
+        ],
+        action: (gs) => { gs.knowsLilithName = true; addNotebookEntry('lilith_name', '關鍵事件', '她的名字', '她終於告訴我她的名字了——莉莉絲。'); }
+    },
+    ending_A: {
+        text: () => `聽到你的回答，莉莉絲的臉龐瞬間崩潰。希望的光芒從她紅色的眼眸中熄滅，取而代之的是深不見底的悲傷與絕望。<br><br>「又一個……你們……你們全都一樣。」<br><br>她的悲傷在下一秒化為純粹的暴怒。她發出不似人類的尖哮，以肉眼難以捕捉的速度向你撲來。<br><br>【結局A：痛苦的循環】<br>你被視為又一個背叛者，她的心徹底封閉，變得比以往更加殘酷。`,
+        choices: [{ text: () => '...', nextScene: 'epilogue', action: (gs) => { gs.achievedEnding = 'A'; } }]
+    },
+    ending_B: {
+        text: () => `莉莉絲靜靜地聽完你的話，沉默了許久。一滴淚珠，緩緩從她蒼白的臉頰滑落。<br><br>「去吧。去過我無法擁有的人生。」她轉過身，「並且……保守我的祕密。」<br><br>她為你打開了那扇塵封已久的玄關大門。陽光灑進來，你回頭看去，只見她站在陰影中，孤獨的身影被拉得很長。在門關上前，你似乎聽到背景中，有微弱而規律的嗶嗶聲。<br><br>【結局B：仁慈的釋放】<br>你給予了她尊重與理解，她也選擇放你自由。`,
+        choices: [{ text: () => '...', nextScene: 'epilogue' }]
+    },
+    ending_C: {
+        text: () => `你的話語讓莉莉絲的眼中重新燃起光芒，但那是一種佔有慾與不安全感混合的光。<br><br>「永遠……？人類的永遠太短暫了。」她走到你面前，輕輕抬起你的下巴，「如果你真心如此，那就證明給我看。」<br><br>她毫不猶豫地咬上你的脖頸。在你意識模糊的最後一刻，你彷彿看到她身後的燭火閃爍了一下，變成手術室的無影灯。<br><br>【結局C：猩紅之吻】<br>你選擇了侍奉，成為她永恆牢籠中的一部分。`,
+        choices: [{ text: () => '...', nextScene: 'epilogue' }]
+    },
+    ending_D: {
+        text: () => `你的告白是治癒她百年傷口的最終良藥。她眼中爆發出前所未有的光彩。<br><br>「我等這句話……等了兩百年。」<br><br>她從床下拖出一個塵封的木箱，裡面是一件華美的婚紗。當她穿上時，那純白的布料似乎在一瞬間閃爍成醫院病袍的材質，但很快又恢復原状。她邀請你與她共舞，準備好一起面對未知的世界。<br><br>【結局D：永恆的誓言】<br>你贏得了她的愛與信任，成為了她真正的伴侶。`,
+        choices: [{ text: () => '...', nextScene: 'epilogue' }]
+    },
+    epilogue: {
+        isRouter: true,
+        text: () => ``,
+        choices: [
+            { text: () => '', nextScene: 'ending_A_real', condition: (gs) => gs.achievedEnding === 'A' },
+            { text: () => '', nextScene: 'ending_B_real', condition: (gs) => gs.achievedEnding === 'B' },
+            { text: () => '', nextScene: 'ending_C_real', condition: (gs) => gs.achievedEnding === 'C' },
+            { text: () => '', nextScene: 'ending_D_real', condition: (gs) => gs.achievedEnding === 'D' }
+        ]
+    },
+    ending_A_real: {
+        text: () => `你的意識被強行抽離。周遭的世界化為一片炫目的純白。耳邊傳來規律的心電圖聲，以及一個充滿失望的聲音。<br><br>「……連結已斷開。但病人的腦波沒有回升跡象。她……沒有跟著你回來。」<br><br>你看著醫療艙中，女孩緊閉的雙眼，臉上毫無生氣。心電圖的聲音，平穩卻冰冷，像是在為一個永不醒來的夢境倒數。你的治療失敗了，你將她永遠地、遺棄在了那座孤獨的古堡深處。`,
+        choices: [
+            { text: () => '（遊戲結束）', nextScene: 'start', action: resetGameState }
+        ]
+
+    },
+    ending_B_real: {
+        text: () => `你的意識被抽離。周遭的世界化為一片炫目的純白。耳邊傳來規律的心電圖聲，以及一個略帶遺憾的聲音。<br><br>「歡迎回來……她的意識回來了，但……」<br><br>女孩的眼睛緩緩睜開，但眼神空洞，不發一語。她只是靜靜地看著你，彷彿在看一個熟悉的陌生人。研究員輕拍你的肩膀：「她需要更多時間。但你為她打開了一扇門，這已經是最好的開始。」`,
+        choices: [
+            { text: () => '（查看床邊的平板電腦）', nextScene: 'final_notebook' }
+        ]
+    },
+    ending_C_real: {
+        text: () => `你的意識被抽離。周遭的世界化為一片炫目的純白。耳邊傳來規律的心電圖聲，以及一個平靜的聲音。<br><br>「歡迎回來。她的狀態很穩定。」<br><br>你看向旁邊的醫療艙，女孩的眼睛緩緩睜開，她看著你，露出一絲極其微弱的微笑。<br><br>「你……你走進了我那座充滿祕密的城堡……而且你沒有逃跑。」`,
+        choices: [
+            { text: () => '（查看床邊的平板電腦）', nextScene: 'final_notebook' }
+        ]
+    },
+    ending_D_real: {
+        text: () => `你的意識被抽離。周遭的世界化為一片炫目的純白。耳邊傳來規律的心電圖聲，以及一個帶著喜悅的聲音。<br><br>「歡迎回來。她的情感反應非常強烈，這是個好現象。」<br><br>女孩的眼睛緩緩睜開，當她看到你時，臉頰泛起一抹嬌媚的紅暈。她掙扎著坐起身，緊緊地抱住你。<br><br>「你要遵守在古堡的約定哦……說書人大人。」`,
+        choices: [
+            { text: () => '（查看床邊的平板電腦）', nextScene: 'final_notebook' }
+        ]
+    },
+    final_notebook: {
+        text: () => `你下意識地拿起病床旁的平板電腦——現代版的「筆記本」。你打開它，看到了在進入連結前，為自己寫下的最後一則筆記。<br><br><em>
+        <h3>治療目標備忘</h3>
+        <p><strong>個案：</strong>[個案姓名]</p>
+        <p><strong>創傷核心隱喻：</strong>吸血鬼化（象徵：被掠奪純真、自我封閉、對外界的恐懼）</p>
+        <p><strong>關鍵創傷節點：</strong><br>
+        1. 初次創傷（代號：德古拉）：來源不明的侵犯，導致核心性格異變。<br>
+        2. 二次創傷（代號：醫生）：前任心理治療師的移情處理失當，導致信任體系崩潰，觸發自殺傾向（墜落）。</p>
+        <p><strong>本次治療目標：</strong>扮演「失憶者」，進入其內心世界（代號：古堡），透過「敘事療法」（故事），建立新的信任連結，引導其正視創傷，最終使其自願「開門」回到現實。</p>
+        <p><strong>操作員：</strong>[治療師姓名]</p>
+        <p>……這是我身為治療師的責任。</p>
+        </em>`,
+        choices: [{ text: () => '（遊戲結束）', nextScene: 'start', action: resetGameState }]
+    }
+};
+
+// Start the game when the window loads
+window.onload = () => {
+    resetGameState();
+    showScene('start');
+};
+</script>
+
 </body>
 </html>
